@@ -7,13 +7,14 @@ import {ERC721URIStorage} from "openzeppelin-contracts/contracts/token/ERC721/ex
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /**
+ * @author ZeroWeb3,Doni
  * @title MedicalCardNFT
  * @dev Контракт ERC-721 для медицинских карт. Использует ERC721Enumerable и Ownable.
- * Все функции, вызывавшие ошибку, являются внутренними (internal) в ERC721 и доступны.
+ * 
  */
 contract MedicalCardNFT is ERC721Enumerable, ERC721URIStorage, Ownable {
 
-    // СЧЕТЧИК ТОКЕНОВ: Начинаем с 1
+    // Тут у нас реализован счетчик токенов 
     uint256 private _tokenIdTracker = 1;
 
     // 1. Приватные данные: tokenId => Адрес врача => Статус доступа (true/false)
@@ -25,7 +26,7 @@ contract MedicalCardNFT is ERC721Enumerable, ERC721URIStorage, Ownable {
     // 3. Адрес, авторизованный для минта (Ваш Бэкенд Xsolla Webhook)
     address public minterServiceAddress;
 
-    // События для отслеживания
+    // Тут у нас реализовано отслеживанние событий:
     event AccessGranted(uint256 indexed tokenId, address indexed doctor);
     event AccessRevoked(uint256 indexed tokenId, address indexed doctor);
     event PrivateDataUpdated(uint256 indexed tokenId, address indexed actor, string newUri);
@@ -33,20 +34,20 @@ contract MedicalCardNFT is ERC721Enumerable, ERC721URIStorage, Ownable {
     event PaymentProcessed(uint256 indexed tokenId, address indexed from, uint256 amount);
     event BaseImageURIUpdated(string newBaseImageURI);
 
-    // Общий URI изображения для всех NFT (например, ipfs://QmCommonImageHash)
+    // Тут у нас реализовано общее изображение для всех NFT
     string public baseImageURI;
     
-    // --- КОНСТРУКТОР ---
+    // --- Наш конструктор  ---
     
     constructor(address initialMinterService, string memory name, string memory symbol) 
         ERC721(name, symbol) 
         Ownable(msg.sender)
     {
-        // Ownable в этой версии принимает initialOwner; устанавливаем deployer владельцем
+        // Тут происходит назначение начального адреса минтера 
         minterServiceAddress = initialMinterService;
     }
 
-    // --- Функции управления общим изображением ---
+    // --- Функции управления общим изображением 
 
     /// @notice Установить базовый URI изображения, общий для всех NFT
     function setBaseImageURI(string memory newBaseImageURI) external onlyOwner {
@@ -61,11 +62,15 @@ contract MedicalCardNFT is ERC721Enumerable, ERC721URIStorage, Ownable {
 
     // --- ФУНКЦИЯ МИНТА (Интеграция с Xsolla) ---
 
-    /// @notice Минтит новый токен с публичным metadata URI (IPFS) и приватным CID/URI
-    /// @param to Получатель токена
-    /// @param tokenMetadataUri Публичный URI (например, ipfs://Qm...) который указывает на JSON в Pinata
+    /// @notice Минтит новый токен с публичным metadata URI IPFS и приватным CID/URI
+    /// @param to Получатель токена адрессат 
+    /// @param tokenMetadataUri Публичный URI  который указывает на JSON в Pinata
     /// @param initialPrivateUri Приватный CID/URI (может быть зашифрованный) для хранения медданных
-    function safeMint(address to, string memory tokenMetadataUri, string memory initialPrivateUri) public returns (uint256) {
+
+
+    function safeMint(address to, string memory tokenMetadataUri, string memory initialPrivateUri)
+     public returns (uint256) {
+
         // Только авторизованный бэкенд может вызывать mint (или владелец может менять этот адрес)
         require(msg.sender == minterServiceAddress, "MINT: Caller is not the authorized minter");
         require(to != address(0), "MINT: Cannot mint to zero address");
@@ -74,14 +79,19 @@ contract MedicalCardNFT is ERC721Enumerable, ERC721URIStorage, Ownable {
         uint256 tokenId = _tokenIdTracker;
 
         _safeMint(to, tokenId);
+
         // Сохраняем публичный metadata URI
         _setTokenURI(tokenId, tokenMetadataUri);
+
         // Сохраняем приватный URI/CID
         _privateTokenUris[tokenId] = initialPrivateUri;
 
+        // Увеличиваем счетчик токенов
         _tokenIdTracker++;
 
+        //Тут у нас реализовано просмотр событий 
         emit NFTMinted(tokenId, to, tokenMetadataUri);
+        
         return tokenId;
     }
 
@@ -108,11 +118,13 @@ contract MedicalCardNFT is ERC721Enumerable, ERC721URIStorage, Ownable {
         _setTokenURI(tokenId, newTokenURI);
     }
     
-    // --- ФУНКЦИИ КОНТРОЛЯ ДОСТУПА (Пациент) ---
+    // --- ФУНКЦИИ КОНТРОЛЯ ДОСТУПА (Доктора) ---
 
+     /// @notice Тут мы назначаем нового пользователя с доступом к медданным
     function grantAccess(uint256 tokenId, address doctor) public {
         address owner = ERC721._ownerOf(tokenId);
         require(owner != address(0), "ACCESS: Token does not exist");
+
         // проверяем авторизацию вызывающего (владелец / approved / operator)
         require(ERC721._isAuthorized(owner, msg.sender, tokenId), "ACCESS: Not authorized");
         require(doctor != address(0), "ACCESS: Doctor address cannot be zero");
@@ -121,6 +133,7 @@ contract MedicalCardNFT is ERC721Enumerable, ERC721URIStorage, Ownable {
         emit AccessGranted(tokenId, doctor);
     }
 
+    /// @notice Тут мы удаляем доступ пользователя к медданным
     function revokeAccess(uint256 tokenId, address doctor) public {
         address owner = ERC721._ownerOf(tokenId);
         require(owner != address(0), "ACCESS: Token does not exist");
@@ -129,10 +142,11 @@ contract MedicalCardNFT is ERC721Enumerable, ERC721URIStorage, Ownable {
         _authorizedDoctors[tokenId][doctor] = false;
         emit AccessRevoked(tokenId, doctor);
     }
-
+    /// @notice Проверяет, имеет ли адрес доступ к приватным данным токена
     function hasAccess(uint256 tokenId, address addr) public view returns (bool) {
         address owner = ERC721._ownerOf(tokenId);
         require(owner != address(0), "ACCESS: Token does not exist");
+
         // владелец, approved или operator всегда имеют доступ
         if (ERC721._isAuthorized(owner, addr, tokenId)) {
             return true;
@@ -143,6 +157,7 @@ contract MedicalCardNFT is ERC721Enumerable, ERC721URIStorage, Ownable {
     // --- ФУНКЦИИ УПРАВЛЕНИЯ ДАННЫМИ ---
 
     function updatePrivateData(uint256 tokenId, string memory newPrivateUri) public {
+
         // Проверка прав на обновление (владелец ИЛИ авторизованный врач)
         address owner = ERC721._ownerOf(tokenId);
         require(owner != address(0), "UPDATE: Token does not exist");
@@ -158,20 +173,25 @@ contract MedicalCardNFT is ERC721Enumerable, ERC721URIStorage, Ownable {
         emit PrivateDataUpdated(tokenId, msg.sender, newPrivateUri);
     }
     
+    /// @notice Получить приватный URI/CID медицинских данных токена
     function getPrivateTokenURI(uint256 tokenId) public view returns (string memory) {
         address owner = ERC721._ownerOf(tokenId);
         require(owner != address(0), "URI: Token does not exist");
+
         // Только владелец, approved, operator или авторизованный врач могут получить приватный URI
         require(hasAccess(tokenId, msg.sender), "URI: Caller has no access to private data");
         return _privateTokenUris[tokenId];
     }
     
-    // --- ПЕРЕОПРЕДЕЛЕНИЕ ФУНКЦИЙ ERC-721 ---
+    // --- ПЕРЕОПРЕДЕЛЕНИЕ ФУНКЦИЙ ERC-721 
 
     /// @dev Возвращает публичный metadata URI (тот, что был установлен при mint через Pinata)
+
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);
     }
+
+    /// @dev Проверка поддержки интерфейсов
     function supportsInterface(bytes4 interfaceId) 
         public 
         view 
@@ -195,6 +215,7 @@ contract MedicalCardNFT is ERC721Enumerable, ERC721URIStorage, Ownable {
         super._increaseBalance(account, value);
     }
 
+ 
     function _update(address to, uint256 tokenId, address auth) internal virtual override(ERC721, ERC721Enumerable) returns (address) {
         return super._update(to, tokenId, auth);
     }

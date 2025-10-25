@@ -11,8 +11,7 @@ const app = express();
 
 // --- КРИТИЧЕСКИЕ ИСПРАВЛЕНИЯ ДЛЯ ОБРАБОТКИ БОЛЬШИХ ФАЙЛОВ ---
 // 1. CORS: разрешает запросы с фронтенда (порт 8080)
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:8080' })); 
-
+app.use(cors()); // Это разрешит ВСЕ источники (*)
 
 // 2. УВЕЛИЧЕННЫЕ ЛИМИТЫ EXPRESS: Для JSON и URL-encoded данных.
 // Устанавливаем лимит 50MB, чтобы не обрывать большие запросы до fileUpload.
@@ -84,9 +83,8 @@ async function getXsollaToken(params) {
     
     const authString = `${XSOLLA_MERCHANT_ID}:${XSOLLA_API_KEY}`;
     const base64Auth = Buffer.from(authString).toString('base64');
-    
-    const response = await fetch('https://api.xsolla.com/merchant/v2/merchants/${XSOLLA_MERCHANT_ID}/payment_token', {
-        method: 'POST',
+const response = await fetch(`https://api.xsolla.com/merchant/v2/merchants/${XSOLLA_MERCHANT_ID}/payment_token`, {
+            method: 'POST',
         headers: {
             'Authorization': `Basic ${base64Auth}`,
             'Content-Type': 'application/json'

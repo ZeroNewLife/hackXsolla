@@ -6,10 +6,13 @@ import {MedicalCardNFT} from "../src/MedicalCard.sol";
 import {console2} from "forge-std/console2.sol";
 
 contract DeployMedicalCard is Script {
+
+
+    // Константы для деплоя
     address public deployer;
     string public constant NFT_NAME = "Xsolla Medical Card NFT";
     string public constant NFT_SYMBOL = "xMCARD";
-    string public constant DEFAULT_BASE_IMAGE = "ipfs://bafybeigpxec6vy7ggpwehma6trv7l4uhervwsndnxfu6ymtiiznu7booce"; // замените на реальный хеш
+    string public constant DEFAULT_BASE_IMAGE = "ipfs://bafkreighn7zc2wrpb3lb7b4ttnd6jlvkoot5xzoidpww6zw7qfs4qkkgma"; // замените на реальный хеш
 
     function setUp() public {
         // Получаем private key из env
@@ -23,6 +26,7 @@ contract DeployMedicalCard is Script {
         uint256 deployerPrivateKey = vm.parseUint(privKey);
         deployer = vm.addr(deployerPrivateKey);
 
+        // Логируем информацию о деплое
         console2.log("Deploying to:", vm.envString("SEPOLIA_RPC_URL"));
         console2.log("Deployer address:", deployer);
         console2.log("NFT Name:", NFT_NAME);
@@ -61,9 +65,11 @@ contract DeployMedicalCard is Script {
         // Устанавливаем базовый URI изображения
         nft.setBaseImageURI(DEFAULT_BASE_IMAGE);
 
+        //Тут тоже логируем данные максимально глупо так делать но пусть будет 
         console2.log("NFT deployed to:", address(nft));
         console2.log("Current minter:", nft.minterServiceAddress());
         
+        // Завершаем broadcast транзакций
         vm.stopBroadcast();
         return nft;
     }

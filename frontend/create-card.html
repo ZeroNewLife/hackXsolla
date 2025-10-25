@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создать медкарту NFT</title>
+    
+    <script src="https://paystation.xsolla.com/latest/paystation.min.js"></script> 
+    <style>
+        /* Минимальные стили для видимости, если styles.css отсутствует */
+        body { 
+            background-color: #333; 
+            color: #fff; 
+            font-family: sans-serif; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .form-container { 
+            max-width: 600px; 
+            width: 100%;
+            padding: 30px; 
+            border: 1px solid #555; 
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group textarea { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #777; 
+            background: #444; 
+            color: #fff; 
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        #createBtn { 
+            background: #3182ce; 
+            color: white; 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            width: 100%; 
+            margin-top: 20px; 
+            font-size: 1.1em;
+            transition: background 0.3s;
+        }
+        #createBtn:disabled { background: #555; cursor: not-allowed; }
+        .preview { margin-top: 25px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; }
+        pre { white-space: pre-wrap; word-wrap: break-word; background: #222; padding: 10px; border-radius: 4px; border: 1px solid #444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h1>Создать медкарту NFT</h1>
+            
+            <div class="form-group">
+                <label for="patientName">ФИО пациента</label>
+                <input type="text" id="patientName" placeholder="Иванов Иван Иванович" required />
+            </div>
+
+            <div class="form-group">
+                <label for="birthDate">Дата рождения</label>
+                <input type="date" id="birthDate" required />
+            </div>
+
+            <div class="form-group">
+                <label for="photoFile">Фото пациента</label>
+                <input type="file" id="photoFile" accept="image/*" />
+            </div>
+
+            <div class="form-group">
+                <label for="diagnosis">Основной диагноз</label>
+                <textarea id="diagnosis" rows="3" placeholder="Основной диагноз..." required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="documents">Медицинские документы (PDF)</label>
+                <input type="file" id="documents" multiple accept=".pdf" />
+            </div>
+
+            <div class="form-group">
+                <label for="additionalInfo">Дополнительная информация</label>
+                <textarea id="additionalInfo" rows="3" placeholder="Аллергии, хронические заболевания..."></textarea>
+            </div>
+
+            <div class="preview">
+                <h3>Предпросмотр данных NFT</h3>
+                <p><small>Публичные данные (Metadata):</small></p>
+                <pre id="publicPreview"></pre>
+                
+                <p><small>Приватные данные (Encrypted):</small></p>
+                <pre id="privatePreview"></pre>
+            </div>
+
+            <button id="createBtn">Создать медкарту (через Xsolla)</button>
+        </div>
+    </div>
+
+    <script type="module">
+        const BACKEND_URL = 'http://localhost:3000'; // Ваш бэкенд
+
+        function collectFormData() {
+            const form = new FormData();
+            
+            const userAddress = window.ethereum && window.ethereum.selectedAddress;
+            if (!userAddress) {
+                alert('Шаг 2: Ошибка кошелька. Пожалуйста, подключите MetaMask перед созданием карты.');
+                return null;
+            }
+            
+            form.append('userAddress', userAddress);
+            form.append('patientName', document.getElementById('patientName').value);
+            form.append('birthDate', document.getElementById('birthDate').value);
+            form.append('diagnosis', document.getElementById('diagnosis').value);
+            form.append('additionalInfo', document.getElementById('additionalInfo').value);
+            
+            const photoFile = document.getElementById('photoFile').files[0];
+            if (photoFile) {
+                form.append('photo', photoFile);
+            }
+            
+            const documentFiles = document.getElementById('documents').files;
+            for (let i = 0; i < documentFiles.length; i++) {
+                form.append('documents', documentFiles[i]);
+            }
+            
+            return form;
+        }
+
+        async function prepareAndOpenPayStation() {
+            const formData = collectFormData();
+            if (!formData) return;
+            
+            alert("Шаг 3: Данные формы собраны. Отправляем запрос на бэкенд (порт 3000).");
+
+            try {
+                document.getElementById('createBtn').textContent = "Загрузка данных и генерация токена...";
+                document.getElementById('createBtn').disabled = true;
+
+                const response = await fetch(`${BACKEND_URL}/api/prepare-medical-card`, {
+                    method: 'POST',
+                    body: formData 
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    alert('Шаг 4: Ошибка БЭКЕНДА. Проверьте консоль сервера (порт 3000) на наличие ошибок!');
+                    throw new Error(data.error || `Бэкенд вернул ошибку: ${response.status}`);
+                }
+
+                if (!data.token) {
+                    alert('Шаг 4: Ошибка Xsolla. Бэкенд не вернул платежный токен. (Проверьте SKU и ключи в .env)');
+                    throw new Error("Не удалось получить токен Xsolla.");
+                }
+                
+                alert("Шаг 5: Токен Xsolla получен! Открываем окно оплаты.");
+
+                const xsollaWidget = new XPayStationWidget({ 
+                    access_token: data.token,
+                    sandbox: true, 
+                    width: 600,
+                    height: 650
+                });
+                
+                xsollaWidget.on('status-done', function(event) {
+                    alert('Оплата завершена! Теперь ждите, пока наш сервер создаст NFT. Проверьте свой кошелек.');
+                    xsollaWidget.close();
+                });
+                
+                xsollaWidget.on('close', function() {
+                    document.getElementById('createBtn').textContent = "Создать медкарту (через Xsolla)";
+                    document.getElementById('createBtn').disabled = false;
+                });
+
+                xsollaWidget.open();
+
+            } catch (error) {
+                console.error('Ошибка в процессе оплаты:', error);
+                if (!error.message.includes('Бэкенд вернул ошибку')) {
+                    alert('Критическая ошибка: ' + error.message);
+                }
+                document.getElementById('createBtn').textContent = "Создать медкарту (через Xsolla)";
+                document.getElementById('createBtn').disabled = false;
+            }
+        }
+
+        function updatePreviews() { 
+            const name = document.getElementById('patientName').value;
+            const date = document.getElementById('birthDate').value;
+
+            const publicData = {
+                name: `Медкарта: ${name}`,
+                description: `Пациент: ${name}\nДата рождения: ${date}`,
+                image: "ipfs://..." 
+            };
+
+            const privateData = {
+                fullName: name,
+                birthDate: date,
+                diagnosis: document.getElementById('diagnosis').value,
+            };
+
+            const pubEl = document.getElementById('publicPreview');
+            if (pubEl) pubEl.textContent = JSON.stringify(publicData, null, 2);
+            
+            const privEl = document.getElementById('privatePreview');
+            if (privEl) privEl.textContent = JSON.stringify(privateData, null, 2);
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('input, textarea').forEach(el => {
+                el.addEventListener('input', updatePreviews);
+            });
+        });
+
+        document.getElementById('createBtn').addEventListener('click', async () => {
+            alert("Шаг 1: Кнопка нажата. Проверяем наличие MetaMask.");
+
+            if (!window.ethereum || !window.ethereum.selectedAddress) {
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                } catch(e) {
+                    alert('Подключение кошелька не удалось. Пожалуйста, убедитесь, что MetaMask установлен.');
+                    return;
+                }
+            }
+            await prepareAndOpenPayStation();
+        });
+
+        updatePreviews();
+    </script>
+</body>
+</html>

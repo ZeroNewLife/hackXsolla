@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MedicalCardNFT — Frontend</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>MedicalCardNFT — Интерфейс</h1>
+
+    <section id="wallet">
+      <button id="connectBtn">Подключить MetaMask</button>
+      <div id="account"></div>
+      <div id="network"></div>
+    </section>
+
+    <section id="contract">
+      <label>Contract address:
+        <input id="contractAddress" value="0xe06e6886Ce61017d9B8663a260EfC6e9449295f6" />
+      </label>
+      <button id="loadContract">Загрузить контракт</button>
+      <div id="contractInfo"></div>
+    </section>
+
+    <hr />
+
+    <section class="grid">
+      <div class="card">
+        <h3>safeMint</h3>
+        <label>Recipient<input id="mint_recipient" placeholder="0x..." /></label>
+        <label>Metadata URI<input id="mint_metadata" placeholder="ipfs://..." /></label>
+        <label>Private CID<input id="mint_private" placeholder="ipfs://..." /></label>
+        <button id="btnSafeMint">safeMint</button>
+        <pre id="outSafeMint" class="out"></pre>
+      </div>
+
+      <div class="card">
+        <h3>processPayment</h3>
+        <label>tokenId<input id="pay_tokenId" type="number" /></label>
+        <button id="btnProcessPayment">processPayment</button>
+        <pre id="outProcessPayment" class="out"></pre>
+      </div>
+
+      <div class="card">
+        <h3>updateTokenMetadata</h3>
+        <label>tokenId<input id="upmeta_tokenId" type="number" /></label>
+        <label>new URI<input id="upmeta_uri" /></label>
+        <button id="btnUpdateMeta">updateTokenMetadata</button>
+        <pre id="outUpdateMeta" class="out"></pre>
+      </div>
+
+      <div class="card">
+        <h3>grantAccess / revokeAccess</h3>
+        <label>tokenId<input id="acc_tokenId" type="number" /></label>
+        <label>doctor address<input id="acc_doctor" /></label>
+        <button id="btnGrant">grantAccess</button>
+        <button id="btnRevoke">revokeAccess</button>
+        <pre id="outAccess" class="out"></pre>
+      </div>
+
+      <div class="card">
+        <h3>hasAccess / getPrivateTokenURI</h3>
+        <label>tokenId<input id="view_tokenId" type="number" /></label>
+        <label>address<input id="view_addr" placeholder="0x... or leave for connected" /></label>
+        <button id="btnHasAccess">hasAccess</button>
+        <button id="btnGetPrivate">getPrivateTokenURI</button>
+        <pre id="outView" class="out"></pre>
+      </div>
+
+      <div class="card">
+        <h3>tokenURI / ownerOf / balanceOf</h3>
+        <label>tokenId<input id="q_tokenId" type="number" /></label>
+        <label>address<input id="q_address" placeholder="0x..." /></label>
+        <button id="btnTokenURI">tokenURI</button>
+        <button id="btnOwnerOf">ownerOf</button>
+        <button id="btnBalanceOf">balanceOf</button>
+        <pre id="outQuery" class="out"></pre>
+      </div>
+
+      <div class="card">
+        <h3>Admin: setBaseImageURI / setMinterServiceAddress</h3>
+        <label>baseImageURI<input id="admin_base" /></label>
+        <label>minterAddress<input id="admin_minter" /></label>
+        <button id="btnSetBase">setBaseImageURI</button>
+        <button id="btnSetMinter">setMinterServiceAddress</button>
+        <pre id="outAdmin" class="out"></pre>
+      </div>
+
+      <div class="card">
+        <h3>updatePrivateData / burn</h3>
+        <label>tokenId<input id="upd_tokenId" type="number" /></label>
+        <label>newPrivateURI<input id="upd_private" /></label>
+        <button id="btnUpdatePrivate">updatePrivateData</button>
+        <button id="btnBurn">burn</button>
+        <pre id="outUpd" class="out"></pre>
+      </div>
+
+    </section>
+
+    <hr />
+    <section>
+      <h4>Logs / Result</h4>
+      <pre id="log" class="log"></pre>
+    </section>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

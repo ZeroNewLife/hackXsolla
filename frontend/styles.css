@@ -1,0 +1,15 @@
+:root{--bg:#0f1720;--card:#0b1220;--accent:#06b6d4;--muted:#94a3b8;--text:#e6eef6}
+body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071028 0%, #071024 100%); color:var(--text); margin:0; padding:24px}
+.container{max-width:1100px;margin:0 auto}
+h1{margin:0 0 12px}
+section{margin:12px 0}
+input,button,select{font-size:14px;padding:8px;border-radius:6px;border:1px solid #1f2a37;background:transparent;color:var(--text)}
+button{cursor:pointer;background:var(--accent);color:#022; border:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.card{background:rgba(255,255,255,0.02);padding:12px;border-radius:8px}
+label{display:block;margin:6px 0}
+.out{background:#022230;padding:8px;border-radius:6px;color:#9be8ff;max-height:120px;overflow:auto}
+.log{background:#011827;padding:12px;border-radius:8px;color:#9bd5ff;max-height:260px;overflow:auto}
+#wallet button{background:#10b981}
+#contract input{width:60%}
+.card button{margin-right:6px;margin-top:6px}
